@@ -18,6 +18,12 @@ issue_type_enum = postgresql.ENUM(
     create_type=True
 )
 
+resolution_enum = postgresql.ENUM(
+    "fixed", "wont_fix", "duplicate", "incomplete",
+    name="resolution_enum",
+    create_type=True
+)
+
 issuestatus_enum = postgresql.ENUM(
     "in_progress", "cancelled", "done","in_review","todo",
     name="issuestatus_enum",
