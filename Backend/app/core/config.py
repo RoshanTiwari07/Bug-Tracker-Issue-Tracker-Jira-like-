@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     
     # Database
     database_url: str = "postgresql://user:password@localhost/dbname"
+    postgres_server: str = "localhost"
+    postgres_port: int = 5433
+    postgres_user: str = "postgres"
+    postgres_password: str = "roshan"
+    postgres_db: str = "Bug_Tracker"
     
     # Security
     secret_key: str = "your-secret-key-change-this"
@@ -24,6 +29,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"  # Allow extra fields from .env
 
 
 @lru_cache()

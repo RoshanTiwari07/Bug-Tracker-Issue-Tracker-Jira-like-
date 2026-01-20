@@ -19,9 +19,9 @@ class Activity(SQLModel, table=True):
     old_value: str = Field(max_length=255, nullable=True)  # "todo"
     new_value: str = Field(max_length=255, nullable=True)  # "in_progress"
     
-    # Optional metadata (JSON for complex data)
-    metadata: str = Field(nullable=True)  # JSON string for extra data
+    # Optional extra data
+    extra_data: str = Field(nullable=True)  # JSON string for extra data
     
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default_factory=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
     )

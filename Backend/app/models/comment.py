@@ -14,8 +14,8 @@ class Comment(SQLModel, table=True):
     content: str = Field(nullable=False)
     is_edited: bool = Field(default=False, nullable=False)
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default_factory=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
     )
     updated_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default_factory=datetime.utcnow, onupdate=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
     )

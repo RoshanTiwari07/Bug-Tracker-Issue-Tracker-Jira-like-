@@ -22,5 +22,5 @@ class Attachment(SQLModel, table=True):
     mime_type: str = Field(max_length=100, nullable=False)  # "image/png", "application/pdf"
     
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default_factory=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
     )

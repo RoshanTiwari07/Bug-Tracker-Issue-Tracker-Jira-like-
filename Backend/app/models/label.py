@@ -17,7 +17,7 @@ class Label(SQLModel, table=True):
     description: str = Field(max_length=255, nullable=True)
     
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default_factory=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
     )
 
 
@@ -32,5 +32,5 @@ class IssueLabel(SQLModel, table=True):
     label_id: UUID = Field(nullable=False, foreign_key="labels.id")
     
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default_factory=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
     )
