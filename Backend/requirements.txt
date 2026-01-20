@@ -1,0 +1,38 @@
+# FastAPI Core
+fastapi[standard]
+uvicorn[standard]
+python-multipart
+fastapi-cli
+
+# Database
+sqlalchemy[asyncio]
+sqlmodel
+asyncpg
+alembic
+
+# Security & Authentication
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+PyJWT
+pydantic[email]
+pydantic-settings
+email-validator
+itsdangerous
+
+# Mail
+fastapi-mail
+
+# Cache
+redis
+
+# Testing
+pytest
+httpx
+
+# Development
+python-dotenv
+typing_extensions
+
+# API Documentation UI
+scalar-fastapi

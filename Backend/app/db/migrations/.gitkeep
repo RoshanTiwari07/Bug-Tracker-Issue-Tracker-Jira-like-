@@ -1,0 +1,3 @@
+# Alembic migrations directory
+# Run: alembic init app/db/migrations
+# to initialize migrations
