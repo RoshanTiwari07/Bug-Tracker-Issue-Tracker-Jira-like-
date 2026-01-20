@@ -1,5 +1,5 @@
 from sqlalchemy.dialects import postgresql
-from sqlmodel import Column, Field
+from sqlmodel import Column, Field, Relationship
 from enum import Enum
 from datetime import datetime
 from app.db.base import BaseModel
@@ -27,6 +27,6 @@ class User(BaseModel, table = True):
     last_login: datetime = Field(
         sa_column=Column(postgresql.TIMESTAMP, nullable=True)    
     )
-
+    project_memberships: list["ProjectMember"] = Relationship(back_populates="user")
 
     
