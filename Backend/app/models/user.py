@@ -1,7 +1,7 @@
 from sqlalchemy.dialects import postgresql
 from sqlmodel import Column, Field, Relationship, SQLModel
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4, UUID
 from app.db.types import role_enum
 from typing import Optional
@@ -32,13 +32,13 @@ class User(SQLModel, table=True):
     
     # Timestamps
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
     )
     updated_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     )
     last_login: Optional[datetime] = Field(
-        sa_column=Column(postgresql.TIMESTAMP, nullable=True)
+        sa_column=Column(postgresql.TIMESTAMP(timezone=True), nullable=True)
     )
 
     
