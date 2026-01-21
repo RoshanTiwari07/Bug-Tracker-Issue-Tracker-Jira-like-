@@ -1,7 +1,7 @@
 from uuid import uuid4, UUID
 from sqlalchemy.dialects import postgresql
 from sqlmodel import Column, Field, SQLModel, UniqueConstraint
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class Label(SQLModel, table=True):
@@ -17,7 +17,7 @@ class Label(SQLModel, table=True):
     description: str = Field(max_length=255, nullable=True)
     
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
     )
 
 
@@ -32,5 +32,5 @@ class IssueLabel(SQLModel, table=True):
     label_id: UUID = Field(nullable=False, foreign_key="labels.id")
     
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
     )
