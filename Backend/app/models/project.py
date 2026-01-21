@@ -1,7 +1,7 @@
 from uuid import uuid4, UUID
 from sqlalchemy.dialects import postgresql
 from sqlmodel import Column, Field, SQLModel, UniqueConstraint
-from datetime import datetime
+from datetime import datetime, timezone
 from app.db.types import project_role_enum
 from enum import Enum
 
@@ -24,10 +24,10 @@ class Project(SQLModel, table=True):
     is_private: bool = Field(default=True, nullable=False)
     created_by: UUID = Field(nullable=False, foreign_key="users.id")
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
     )
     updated_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     )
 
 
@@ -43,6 +43,6 @@ class ProjectMember(SQLModel, table=True):
     user_id: UUID = Field(nullable=False, foreign_key="users.id")
     role: ProjectRole = Field(sa_column=Column(project_role_enum, nullable=False))
     joined_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
     )
     added_by: UUID = Field(nullable=False, foreign_key="users.id")

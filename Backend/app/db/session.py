@@ -1,12 +1,14 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from typing import AsyncGenerator
-from app.core.config import settings
+from typing import AsyncGenerator, Annotated
+from app.core.config import get_db_settings, get_settings
+from fastapi import Depends
 
-# Build database URL from config
-async_database_url = f"postgresql+asyncpg://{settings.postgres_user}:{settings.postgres_password}@{settings.postgres_server}:{settings.postgres_port}/{settings.postgres_db}"
+# Get database and general settings
+db_settings = get_db_settings()
+settings = get_settings()
 
 engine = create_async_engine(
-    async_database_url,
+    db_settings.POSTGRES_URL(),
     pool_pre_ping=True,
     echo=settings.debug,
     future=True
@@ -22,9 +24,17 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Get async database session"""
+    """Get async database session with proper cleanup"""
     async with AsyncSessionLocal() as session:
         try:
             yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
         finally:
             await session.close()
+
+
+# Type annotation for dependency injection
+SessionDep = Annotated[AsyncSession, Depends(get_db)]
