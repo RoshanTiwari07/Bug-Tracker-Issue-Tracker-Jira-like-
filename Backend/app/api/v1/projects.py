@@ -3,7 +3,7 @@ from typing import List
 from uuid import UUID
 
 from app.db.session import SessionDep
-from app.dependencies.auth import CurrentActiveUser, AdminUser
+from app.dependencies.auth import CurrentActiveUser
 from app.services.project_service import ProjectService
 from app.schemas.project import (
     ProjectCreate, 
