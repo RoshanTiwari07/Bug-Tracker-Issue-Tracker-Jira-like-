@@ -44,8 +44,8 @@ class TicketBase(BaseModel):
     due_date: Optional[datetime] = None
 
 class TicketCreate(TicketBase):
-    project_id: UUID
-    assignee_id: Optional[UUID] = None
+    project_name: str = Field(..., min_length=1, max_length=100, description="Project name (e.g., 'Bug Tracker')")
+
 
 class TicketUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=200)

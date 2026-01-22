@@ -8,7 +8,7 @@ from uuid import UUID
 class LabelBase(BaseModel):
     """Base label schema"""
     name: str = Field(..., min_length=1, max_length=50)
-    color: Optional[str] = Field(None, regex="^#(?:[0-9a-fA-F]{3}){1,2}$")  
+    color: Optional[str] = Field(None, pattern="^#(?:[0-9a-fA-F]{3}){1,2}$")  
     description: Optional[str] = None
 
 class LabelCreate(LabelBase):
@@ -17,7 +17,7 @@ class LabelCreate(LabelBase):
 
 class LabelUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=50)
-    color: Optional[str] = Field(None, regex="^#(?:[0-9a-fA-F]{3}){1,2}$")
+    color: Optional[str] = Field(None, pattern="^#(?:[0-9a-fA-F]{3}){1,2}$")
     description: Optional[str] = None
 
 class LabelResponse(LabelBase):
