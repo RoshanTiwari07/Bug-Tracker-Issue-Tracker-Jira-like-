@@ -11,11 +11,12 @@ class IssueType(str, Enum):
     TASK = "task"
 
 class Status(str, Enum):
-    IN_PROGRESS = "in_progress"
-    CANCELLED = "cancelled"
-    DONE = "done"
-    IN_REVIEW = "in_review"
+    IDEA = "idea"
     TODO = "todo"
+    IN_PROGRESS = "in_progress"
+    IN_REVIEW = "in_review"
+    DONE = "done"
+    CANCELLED = "cancelled"
 
 class Resolution(str, Enum):
     FIXED = "fixed"

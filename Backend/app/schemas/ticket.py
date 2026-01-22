@@ -9,11 +9,12 @@ from app.schemas.labels import LabelResponse
 
 class Status(str, Enum):
     """Ticket status options"""
-    IN_PROGRESS = "in_progress"
-    CANCELLED = "cancelled"
-    DONE = "done"
-    IN_REVIEW = "in_review"
+    IDEA = "idea"
     TODO = "todo"
+    IN_PROGRESS = "in_progress"
+    IN_REVIEW = "in_review"
+    DONE = "done"
+    CANCELLED = "cancelled"
 
 class PriorityLevel(str, Enum):
     """Ticket priority levels"""
