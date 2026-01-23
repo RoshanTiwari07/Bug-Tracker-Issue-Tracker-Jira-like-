@@ -74,7 +74,7 @@ class TicketService(BaseService):
         query = select(Ticket).where(
             and_(
                 Ticket.project_id == project_id,
-                Ticket.is_archived == False
+                Ticket.is_archived is not True
             )
         )
         
