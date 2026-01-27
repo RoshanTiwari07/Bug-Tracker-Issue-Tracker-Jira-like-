@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, status
-from typing import List
+from fastapi import APIRouter, HTTPException, status, Query
+from typing import List, Optional
 from uuid import UUID
 from sqlalchemy import select
 from pydantic import BaseModel
@@ -9,6 +9,7 @@ from app.dependencies.auth import CurrentActiveUser
 from app.dependencies.tickets import TicketServiceDep
 from app.db.session import SessionDep
 from app.schemas.ticket import TicketCreate, TicketWithDetails, TicketUpdate, Status
+from app.models.ticket import Ticket, IssueType, Priority
 from app.models.project import Project
 from app.models.user import User
 
@@ -25,6 +26,14 @@ class ProjectMemberResponse(BaseModel):
     username: str
     email: str
     full_name: str
+
+class SearchResponse(BaseModel):
+    """Response for search/filter operations"""
+    total: int
+    count: int
+    items: List[TicketWithDetails]
+    skip: int
+    limit: int
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 
@@ -272,3 +281,92 @@ async def get_project_members(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# ========== ENDPOINT 6: SEARCH & FILTER TICKETS ==========
+@router.get("/{project_name}/search", response_model=SearchResponse)
+async def search_tickets(
+    project_name: str,
+    service: TicketServiceDep,
+    db: SessionDep,
+    current_user: CurrentActiveUser,
+    # Search parameters
+    keyword: Optional[str] = Query(None, min_length=1, description="Search in title, description, and ticket key"),
+    status: Optional[Status] = Query(None, description="Filter by status"),
+    priority: Optional[Priority] = Query(None, description="Filter by priority"),
+    issue_type: Optional[IssueType] = Query(None, description="Filter by issue type"),
+    assignee_id: Optional[UUID] = Query(None, description="Filter by assignee ID"),
+    reporter_id: Optional[UUID] = Query(None, description="Filter by reporter ID"),
+    # Pagination and sorting
+    skip: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(20, ge=1, le=100, description="Number of items to return"),
+    sort_by: str = Query("created_at", description="Field to sort by: created_at, updated_at, priority, status, title"),
+    sort_order: str = Query("desc", regex="^(asc|desc)$", description="Sort order: asc or desc")
+):
+    """
+    Advanced search and filter for tickets with multiple options.
+    
+    Query Parameters:
+    - keyword: Search in title, description, and ticket key (case-insensitive)
+    - status: Filter by ticket status (idea, todo, in_progress, in_review, done, cancelled)
+    - priority: Filter by priority (low, medium, high, critical)
+    - issue_type: Filter by type (bug, feature, task)
+    - assignee_id: Filter by assignee UUID
+    - reporter_id: Filter by reporter UUID
+    - sort_by: created_at, updated_at, priority, status, title
+    - sort_order: asc or desc
+    - skip: Pagination offset
+    - limit: Number of results (max 100)
+    """
+    try:
+        project_service = ProjectService(db)
+        
+        # Get project by name
+        result = await db.execute(
+            select(Project).where(Project.name == project_name)
+        )
+        project = result.scalar_one_or_none()
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project '{project_name}' not found"
+            )
+        
+        # Verify user is member of the project
+        is_member = await project_service.is_member(project.id, current_user.id)
+        if not is_member:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this project"
+            )
+        
+        # Perform search
+        tickets, total_count = await service.search_tickets(
+            project_id=project.id,
+            keyword=keyword,
+            status=status,
+            priority=priority,
+            issue_type=issue_type,
+            assignee_id=assignee_id,
+            reporter_id=reporter_id,
+            skip=skip,
+            limit=limit,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+        
+        return SearchResponse(
+            total=total_count,
+            count=len(tickets),
+            items=[TicketWithDetails.model_validate(t) for t in tickets],
+            skip=skip,
+            limit=limit
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Search failed: {str(e)}"
+        )

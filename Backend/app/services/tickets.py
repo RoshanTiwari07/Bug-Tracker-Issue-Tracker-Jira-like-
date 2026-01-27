@@ -1,9 +1,9 @@
 from uuid import UUID
 from typing import List, Optional
-from sqlalchemy import select, and_ , func
+from sqlalchemy import select, and_, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.base import BaseService
-from app.models.ticket import Priority, Status, Ticket
+from app.models.ticket import Priority, Status, Ticket, IssueType
 from app.models.project import Project
 from datetime import datetime, timezone
 
@@ -93,6 +93,104 @@ class TicketService(BaseService):
         
         result = await self.session.execute(query)
         return result.scalars().all()
+    
+    async def search_tickets(
+        self,
+        project_id: UUID,
+        keyword: Optional[str] = None,
+        status: Optional[Status] = None,
+        priority: Optional[Priority] = None,
+        issue_type: Optional[IssueType] = None,
+        assignee_id: Optional[UUID] = None,
+        reporter_id: Optional[UUID] = None,
+        skip: int = 0,
+        limit: int = 20,
+        sort_by: str = "created_at",
+        sort_order: str = "desc"
+    ) -> tuple[List[Ticket], int]:
+        """Search and filter tickets with comprehensive options"""
+        
+        # Base query
+        query = select(Ticket).where(
+            and_(
+                Ticket.project_id == project_id,
+                Ticket.is_archived is not True
+            )
+        )
+        
+        # Keyword search (searches title and description)
+        if keyword:
+            search_term = f"%{keyword}%"
+            query = query.where(
+                or_(
+                    Ticket.title.ilike(search_term),
+                    Ticket.description.ilike(search_term),
+                    Ticket.key.ilike(search_term)
+                )
+            )
+        
+        # Filter by status
+        if status:
+            query = query.where(Ticket.status == status)
+        
+        # Filter by priority
+        if priority:
+            query = query.where(Ticket.priority == priority)
+        
+        # Filter by issue type
+        if issue_type:
+            query = query.where(Ticket.type == issue_type)
+        
+        # Filter by assignee
+        if assignee_id:
+            query = query.where(Ticket.assignee_id == assignee_id)
+        
+        # Filter by reporter
+        if reporter_id:
+            query = query.where(Ticket.reporter_id == reporter_id)
+        
+        # Count total results before pagination
+        count_query = select(func.count(Ticket.id)).select_from(Ticket).where(
+            and_(
+                Ticket.project_id == project_id,
+                Ticket.is_archived is not True
+            )
+        )
+        if keyword:
+            search_term = f"%{keyword}%"
+            count_query = count_query.where(
+                or_(
+                    Ticket.title.ilike(search_term),
+                    Ticket.description.ilike(search_term),
+                    Ticket.key.ilike(search_term)
+                )
+            )
+        if status:
+            count_query = count_query.where(Ticket.status == status)
+        if priority:
+            count_query = count_query.where(Ticket.priority == priority)
+        if issue_type:
+            count_query = count_query.where(Ticket.type == issue_type)
+        if assignee_id:
+            count_query = count_query.where(Ticket.assignee_id == assignee_id)
+        if reporter_id:
+            count_query = count_query.where(Ticket.reporter_id == reporter_id)
+        
+        count_result = await self.session.execute(count_query)
+        total_count = count_result.scalar() or 0
+        
+        # Apply sorting
+        sort_column = getattr(Ticket, sort_by, Ticket.created_at)
+        if sort_order.lower() == "asc":
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        # Apply pagination
+        query = query.offset(skip).limit(limit)
+        
+        result = await self.session.execute(query)
+        return result.scalars().all(), total_count
     
     async def get_ticket_by_id(self, ticket_id: UUID) -> Optional[Ticket]:
         """Get a ticket by ID"""
