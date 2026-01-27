@@ -2,7 +2,13 @@ from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
 
-from Backend.app.schemas.user import UserResponse
+from app.schemas.user import UserResponse
+
+
+class AttachmentCreate(BaseModel):
+    """Attachment create schema"""
+    # File is handled by FastAPI's UploadFile
+    pass
 
 
 class AttachmentResponse(BaseModel):

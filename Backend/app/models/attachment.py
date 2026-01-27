@@ -1,7 +1,7 @@
 from uuid import uuid4, UUID
 from sqlalchemy.dialects import postgresql
 from sqlmodel import Column, Field, SQLModel
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class Attachment(SQLModel, table=True):
@@ -22,5 +22,5 @@ class Attachment(SQLModel, table=True):
     mime_type: str = Field(max_length=100, nullable=False)  # "image/png", "application/pdf"
     
     created_at: datetime = Field(
-        sa_column=Column(postgresql.TIMESTAMP, default=datetime.utcnow)
+        sa_column=Column(postgresql.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
     )
