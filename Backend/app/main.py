@@ -7,6 +7,11 @@ from app.core.logging import setup_logging, get_logger
 from app.api.v1.router import api_router
 from app.db.base import Base
 from app.db.session import engine
+from sqlmodel import SQLModel
+
+# Import all models to ensure they're registered with the metadata
+# This MUST be done before create_all() is called
+import app.models  # This will import all models in the correct order
 
 # Setup logging
 setup_logging()
@@ -19,12 +24,14 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     # Startup
     async with engine.begin() as conn:
+        # Create tables from both Base (SQLAlchemy) and SQLModel metadata
         await conn.run_sync(Base.metadata.create_all)
-    logger.info("✅ Database tables created")
+        await conn.run_sync(SQLModel.metadata.create_all)
+    logger.info("[OK] Database tables created")
     yield
     # Shutdown
     await engine.dispose()
-    logger.info("✅ Database connection closed")
+    logger.info("[OK] Database connection closed")
 
 
 # Create FastAPI app with lifespan
@@ -40,8 +47,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers
