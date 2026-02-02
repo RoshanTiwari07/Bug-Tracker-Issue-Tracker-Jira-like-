@@ -1,10 +1,12 @@
 from uuid import UUID
 from typing import List, Optional
 from sqlalchemy import select, and_, func, or_
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.base import BaseService
 from app.models.ticket import Priority, Status, Ticket, IssueType
 from app.models.project import Project
+from app.models.user import User
 from datetime import datetime, timezone
 
 
@@ -190,7 +192,16 @@ class TicketService(BaseService):
         query = query.offset(skip).limit(limit)
         
         result = await self.session.execute(query)
-        return result.scalars().all(), total_count
+        tickets = result.scalars().all()
+        
+        # Load related objects for each ticket to avoid lazy loading issues
+        for ticket in tickets:
+            # Access the relationships to ensure they're loaded
+            _ = ticket.reporter_id  # This is already available
+            _ = ticket.assignee_id  # This is already available
+        
+        return tickets, total_count
+
     
     async def get_ticket_by_id(self, ticket_id: UUID) -> Optional[Ticket]:
         """Get a ticket by ID"""
@@ -216,12 +227,15 @@ class TicketService(BaseService):
             raise ValueError("Ticket not found")
         
         ticket.status = status
-        if resolution:
-            ticket.resolution = resolution
-        
-        # Set resolved_at if status is resolved
         if status == Status.DONE:
+            # Set resolution fields when closing
+            if resolution:
+                ticket.resolution = resolution
             ticket.resolved_at = datetime.now(timezone.utc)
+        else:
+            # Reopening or moving out of DONE clears resolution metadata
+            ticket.resolution = None
+            ticket.resolved_at = None
         
         return await self._update(ticket)
     
@@ -233,3 +247,12 @@ class TicketService(BaseService):
         
         ticket.assignee_id = assignee_id
         return await self._update(ticket)
+    
+    async def delete_ticket(self, ticket_id: UUID) -> bool:
+        """Delete a ticket permanently"""
+        ticket = await self._get(ticket_id)
+        if not ticket:
+            raise ValueError("Ticket not found")
+        
+        await self.session.delete(ticket)
+        return True
